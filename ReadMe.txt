@@ -1,0 +1,1 @@
+parameters/run/visualization:[0] no visualization;[1] interactive show；[2]save result
