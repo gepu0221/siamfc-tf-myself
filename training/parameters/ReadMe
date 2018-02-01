@@ -1,0 +1,3 @@
+parameters:
+/design :the net parameters
+dPos:pixel with distance from center d>dPos are given a negative label(for create lable)

@@ -1,0 +1,8 @@
+{
+    "STR": "xcorr",
+    "exemplarSize": 127,
+    "instacneSize": 255,
+    "socre_size":255,
+    "dPos":16
+    "pad_with_image_mean": true
+}
