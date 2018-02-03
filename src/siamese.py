@@ -114,6 +114,7 @@ def _create_siamese(net_path, net_x, net_z):
         # add max pool if required
         if _pool_stride[i]>0:
             print("_pool_stride")
+           
             
     return net_z, net_x, params_names_list, params_values_list
 
