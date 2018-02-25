@@ -7,10 +7,11 @@ def set_convolutional(X,W_shape,b_shape,stride,bn_beta,bn_gamma,bn_init_mean,bn_
     #use the input scope or default to "conv"
     #if reuse????:?????????
     with tf.variable_scope(scope or 'conv',reuse=reuse):
+    #with tf.variable_scope(scope or 'conv'):
         #trainable:标记是否加入GraphKeys.TRAINABLE_VARIABLES集合
         #tf.truncated_normal_initializer(stddev=0.1):生成的随机的标准方差*********以高斯分布的方式初始化W和b，之后复用（reuse=True)
         W=tf.get_variable("W",W_shape,trainable=False,initializer=tf.truncated_normal_initializer(stddev=0.1))
-        b=tf.get_variable("b",b_shape,trainable=False,initializer=tf.truncated_normal_initializer(stddev=0.1)
+        b=tf.get_variable("b",b_shape,trainable=False,initializer=tf.truncated_normal_initializer(stddev=0.1))
         
         #padding='VALID'：按照(图片大小-filterSize(=W.size))/stride+1
         #padding='SAME' :大小和原图像一致

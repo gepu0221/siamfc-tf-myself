@@ -1,7 +1,7 @@
 {
-    "image_type": "JPEG",
+    "image_type": "jpg",
     "root_train_dataset": "train_data",
-    "root_parameters": "parameters",
+    "root_parameters":"parameters",
     "root_train_result_param":"train_result_param",
-    "exemplarSize_not_use": 127,
+    "exemplarSize_not_use": 127
 }

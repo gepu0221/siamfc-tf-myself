@@ -1,8 +1,8 @@
 {
     "dataset": "EyeSurgery",
-    "video":"01",
+    "video":"tc_Airport_ce",
     "gt_name":"groundtruth.txt",
-    "gt_delimiter":","
+    "gt_delimiter":",",
     "train_re_param_file":"train_re_param.pb",
     "resultset":"result",
     "start_frame": 0
