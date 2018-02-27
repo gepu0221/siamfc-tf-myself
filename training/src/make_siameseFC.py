@@ -19,11 +19,15 @@ _if_relu=np.array([1,1,1,1,0],dtype=bool)
 _nums_layers=len(_conv_w_sz)#the number of layers
 
 pos_x=tf.placeholder(tf.float64)
+x_size=tf.placeholder(tf.float32)
+z_size=tf.placeholder(tf.float32)
+#pos_x=tf.placeholder(tf.float64)
 pos_y=tf.placeholder(tf.float64)
 #从原图中裁剪出的z和x的size（非最后训练尺寸）
 #the size of z and x from origin image,not the last training size
-z_size=tf.placeholder(tf.float64)
-x_size=tf.placeholder(tf.float64)
+#x_size=tf.placeholder(tf.float32)
+#z_size=tf.placeholder(tf.float32)
+#x_size=tf.placeholder(tf.float32)
 
 
 def make_siameseFC(env,design,hp):
@@ -60,14 +64,14 @@ def make_siameseFC(env,design,hp):
     #def extract_crops(im,npad,pos_x,pos_y,size_src,size_dst)
     crop_z=extract_crops(im_padded_z,npad_z,pos_x,pos_y,z_size,design.exemplarSize)
     #x
-    print(x_size)
+    #x_size=tf.cast(x_size,tf.float64)
     im_padded_x,npad_x=pad_frame(im,frame_size,pos_x,pos_y,x_size,avg_chan)
     im_padded_x=tf.cast(im_padded_x,tf.float32)
     #crop the x patch
     crop_x=extract_crops(im_padded_x,npad_x,pos_x,pos_y,x_size,design.instacneSize)
     
     #use the crops as a input of Siamese net to train
-    _siam_net_z,_siam_net_x=create_net(crop_x,crop_z)
+    _siam_net_z,_siam_net_x=create_net_define_var(crop_x,crop_z)
     #evaliate the correlation between x and z
     scores=_match_templates(_siam_net_z,_siam_net_x)
     #upsample the score maps
@@ -143,6 +147,7 @@ def create_net(net_x,net_z):
     return net_z,net_x
 
 def create_net_define_var(crop_x,crop_z):
+    print('Layer conv1')
     with tf.variable_scope('conv1'):
     #with tf.variable_scope(scope or 'conv'):
         #trainable:标记是否加入GraphKeys.TRAINABLE_VARIABLES集合
@@ -153,7 +158,7 @@ def create_net_define_var(crop_x,crop_z):
         #padding='VALID'：按照(图片大小-filterSize(=W.size))/stride+1
         #padding='SAME' :大小和原图像一致
         #stride:卷积的步长
-        stride=2
+        stride=_conv_stride[0]
         h_x=tf.nn.conv2d(crop_x,W,strides=[1,stride,stride,1],padding='VALID')+b
         
       
@@ -162,8 +167,181 @@ def create_net_define_var(crop_x,crop_z):
         h_z=tf.nn.conv2d(crop_z,W,strides=[1,stride,stride,1],padding='VALID')+b
         
         h_z=tf.nn.relu(h_z)
+        
+        print(h_x)
+        print(h_z)
+        
+        if _pool_stride[0]>0:
+            print("_pool_stride")
+            h_x=tf.nn.max_pool(h_x,[1,_pool_sz[0],_pool_sz[0],1],strides=[1,_pool_stride[0],_pool_stride[0],1],
+                                 padding='VALID',name='pool1')
+            h_z=tf.nn.max_pool(h_z,[1,_pool_sz[0],_pool_sz[0],1],strides=[1,_pool_stride[0],_pool_stride[0],1],
+                                 padding='VALID',name='pool1')
             
-        return h_z,h_x
+        print(h_x)
+        print(h_z)
+        
+    print('Layer conv2')
+    with tf.variable_scope('conv2'):
+    #with tf.variable_scope(scope or 'conv'):
+        #trainable:标记是否加入GraphKeys.TRAINABLE_VARIABLES集合
+        #tf.truncated_normal_initializer(stddev=0.1):生成的随机的标准方差*********以高斯分布的方式初始化W和b，之后复用（reuse=True)
+        W=tf.get_variable("W",[_conv_w_sz[1],_conv_w_sz[1],_conv_w_in_c[1],_conv_w_out[1]],initializer=tf.truncated_normal_initializer(stddev=0.1))
+        b=tf.get_variable("b",_conv_w_out[1],initializer=tf.truncated_normal_initializer(stddev=0.1))
+        
+        #padding='VALID'：按照(图片大小-filterSize(=W.size))/stride+1
+        #padding='SAME' :大小和原图像一致
+        #stride:卷积的步长
+        stride=_conv_stride[1]
+        h_x=tf.nn.conv2d(h_x,W,strides=[1,stride,stride,1],padding='VALID')+b
+        
+      
+        h_x=tf.nn.relu(h_x)
+            
+        h_z=tf.nn.conv2d(h_z,W,strides=[1,stride,stride,1],padding='VALID')+b
+        
+        h_z=tf.nn.relu(h_z)
+        
+        print(h_x)
+        print(h_z)
+        if _pool_stride[1]>0:
+            print("_pool_stride")
+            h_x=tf.nn.max_pool(h_x,[1,_pool_sz[1],_pool_sz[1],1],strides=[1,_pool_stride[1],_pool_stride[1],1],
+                                 padding='VALID',name='pool2')
+            h_z=tf.nn.max_pool(h_z,[1,_pool_sz[1],_pool_sz[1],1],strides=[1,_pool_stride[1],_pool_stride[1],1],
+                                 padding='VALID',name='pool2')
+       
+        print(h_x)
+        print(h_z)
+      
+    print('Layer conv3')
+    with tf.variable_scope('conv3'):
+    #with tf.variable_scope(scope or 'conv'):
+        #trainable:标记是否加入GraphKeys.TRAINABLE_VARIABLES集合
+        #tf.truncated_normal_initializer(stddev=0.1):生成的随机的标准方差*********以高斯分布的方式初始化W和b，之后复用（reuse=True)
+        W=tf.get_variable("W",[_conv_w_sz[2],_conv_w_sz[2],_conv_w_in_c[2],_conv_w_out[2]],initializer=tf.truncated_normal_initializer(stddev=0.1))
+        b=tf.get_variable("b",_conv_w_out[2],initializer=tf.truncated_normal_initializer(stddev=0.1))
+        
+        #padding='VALID'：按照(图片大小-filterSize(=W.size))/stride+1
+        #padding='SAME' :大小和原图像一致
+        #stride:卷积的步长
+        stride=_conv_stride[2]
+        h_x=tf.nn.conv2d(h_x,W,strides=[1,stride,stride,1],padding='VALID')+b
+        
+      
+        h_x=tf.nn.relu(h_x)
+            
+        h_z=tf.nn.conv2d(h_z,W,strides=[1,stride,stride,1],padding='VALID')+b
+        
+        h_z=tf.nn.relu(h_z)
+        
+        print(h_x)
+        print(h_z)
+        
+        if _pool_stride[2]>0:
+            print("_pool_stride")
+            h_x=tf.nn.max_pool(h_x,[1,_pool_sz[2],_pool_sz[2],1],strides=[1,_pool_stride[2],_pool_stride[2],1],
+                                 padding='VALID',name='pool3')
+            h_z=tf.nn.max_pool(h_z,[1,_pool_sz[1],_pool_sz[2],1],strides=[1,_pool_stride[2],_pool_stride[2],1],
+                                 padding='VALID',name='pool3')
+         
+        print(h_x)
+        print(h_z)
+    
+    print('Layer conv4')
+    with tf.variable_scope('conv4'):
+    #with tf.variable_scope(scope or 'conv'):
+        #trainable:标记是否加入GraphKeys.TRAINABLE_VARIABLES集合
+        #tf.truncated_normal_initializer(stddev=0.1):生成的随机的标准方差*********以高斯分布的方式初始化W和b，之后复用（reuse=True)
+        W=tf.get_variable("W",[_conv_w_sz[3],_conv_w_sz[3],_conv_w_in_c[3],_conv_w_out[3]],initializer=tf.truncated_normal_initializer(stddev=0.1))
+        b=tf.get_variable("b",_conv_w_out[3],initializer=tf.truncated_normal_initializer(stddev=0.1))
+        
+        #padding='VALID'：按照(图片大小-filterSize(=W.size))/stride+1
+        #padding='SAME' :大小和原图像一致
+        #stride:卷积的步长
+        stride=_conv_stride[3]
+        h_x=tf.nn.conv2d(h_x,W,strides=[1,stride,stride,1],padding='VALID')+b
+        
+      
+        h_x=tf.nn.relu(h_x)
+            
+        h_z=tf.nn.conv2d(h_z,W,strides=[1,stride,stride,1],padding='VALID')+b
+        
+        h_z=tf.nn.relu(h_z)
+        
+        print(h_x)
+        print(h_z)
+        
+        if _pool_stride[3]>0:
+            print("_pool_stride")
+            h_x=tf.nn.max_pool(h_x,[1,_pool_sz[3],_pool_sz[3],1],strides=[1,_pool_stride[3],_pool_stride[3],1],
+                                 padding='VALID',name='pool4')
+            h_z=tf.nn.max_pool(h_z,[1,_pool_sz[3],_pool_sz[3],1],strides=[1,_pool_stride[3],_pool_stride[3],1],
+                                 padding='VALID',name='pool4')
+        
+        print(h_x)
+        print(h_z)
+    
+    print('Layer conv5')
+    with tf.variable_scope('conv5'):
+    #with tf.variable_scope(scope or 'conv'):
+        #trainable:标记是否加入GraphKeys.TRAINABLE_VARIABLES集合
+        #tf.truncated_normal_initializer(stddev=0.1):生成的随机的标准方差*********以高斯分布的方式初始化W和b，之后复用（reuse=True)
+        W=tf.get_variable("W",[_conv_w_sz[4],_conv_w_sz[4],_conv_w_in_c[4],_conv_w_out[4]],initializer=tf.truncated_normal_initializer(stddev=0.1))
+        b=tf.get_variable("b",_conv_w_out[4],initializer=tf.truncated_normal_initializer(stddev=0.1))
+        
+        #padding='VALID'：按照(图片大小-filterSize(=W.size))/stride+1
+        #padding='SAME' :大小和原图像一致
+        #stride:卷积的步长
+        stride=_conv_stride[4]
+        h_x=tf.nn.conv2d(h_x,W,strides=[1,stride,stride,1],padding='VALID')+b
+            
+        h_z=tf.nn.conv2d(h_z,W,strides=[1,stride,stride,1],padding='VALID')+b
+        
+        print(h_x)
+        print(h_z)
+       
+        if _pool_stride[4]>0:
+            print("_pool_stride")
+            h_x=tf.nn.max_pool(h_x,[1,_pool_sz[4],_pool_sz[4],1],strides=[1,_pool_stride[3],_pool_stride[3],1],
+                                 padding='VALID',name='pool5')
+            h_z=tf.nn.max_pool(h_z,[1,_pool_sz[4],_pool_sz[4],1],strides=[1,_pool_stride[3],_pool_stride[3],1],
+                                 padding='VALID',name='pool5')
+    return h_z,h_x
+
+def create_net_loss(crop_x,crop_z):
+    for i in range(_nums_layers):
+        print('Layer '+str(i+1))
+        with tf.variable_scope('conv1'+str(i+1)):
+            W=tf.get_variable("W",[_conv_w_sz[i],_conv_w_sz[i],_conv_w_in_c[i],_conv_w_out[i]],trainable=False,initializer=tf.truncated_normal_initializer(stddev=0.1))
+            b=tf.get_variable("b",_conv_w_out[i],trainable=False,initializer=tf.truncated_normal_initializer(stddev=0.1))
+            
+            #padding='VALID'：按照(图片大小-filterSize(=W.size))/stride+1
+            #padding='SAME' :大小和原图像一致
+            #stride:卷积的步长
+            stride=_conv_stride[i]
+            net_x=tf.nn.conv2d(crop_x,W,strides=[1,stride,stride,1],padding='VALID')+b
+            net_z=tf.nn.conv2d(crop_z,W,strides=[1,stride,stride,1],padding='VALID')+b
+            
+            activation=_if_relu[i]
+            if activation:
+                net_x=tf.nn.relu(net_x)
+                net_z=tf.nn.relu(net_z)
+                
+              #if having the pooling
+            if _pool_stride[i]>0:
+                print("_pool_stride")
+                net_x=tf.nn.max_pool(net_x,[1,_pool_sz[i],_pool_sz[i],1],strides=[1,_pool_stride[i],_pool_stride[i],1],
+                                 padding='VALID',name='pool'+str(i+1))
+                net_z=tf.nn.max_pool(net_z,[1,_pool_sz[i],_pool_sz[i],1],strides=[1,_pool_stride[i],_pool_stride[i],1],
+                                 padding='VALID',name='pool'+str(i+1))
+                
+            print(net_z)
+            print(net_x)
+            print('Layer '+str(i+1)+' end')
+                
+    return net_z,net_x
+                    
 
 def _match_templates(net_z,net_x):
     #-------------------------------------------------------------------------

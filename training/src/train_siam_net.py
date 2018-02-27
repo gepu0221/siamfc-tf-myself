@@ -14,8 +14,8 @@ def train_siam_net(design,hp,frame_name_list,z_index,pos_x,pos_y,target_w,target
     t_sz=(target_w+target_h)*design.context_amount
     w_crop_z=target_w+t_sz
     h_crop_z=target_h+t_sz
-    sz_z=np.sqrt(w_crop_z*h_crop_z)
-    sz_x=design.instacneSize/design.exemplarSize*sz_z
+    sz_z=np.sqrt(float(w_crop_z)*float(h_crop_z))
+    sz_x=float(design.instacneSize)/float(design.exemplarSize)*sz_z
     
     with tf.Session() as sess:
         tf.global_variables_initializer().run()
@@ -24,24 +24,28 @@ def train_siam_net(design,hp,frame_name_list,z_index,pos_x,pos_y,target_w,target
         threads=tf.train.start_queue_runners(coord=coord)
         
         siam_net_z_ = sess.run([siam_net_z],feed_dict={
+        #sess.run([train_op],feed_dict={
                                                        siam.pos_x:pos_x,
                                                        siam.pos_y:pos_y,
                                                        siam.z_size:sz_z,
                                                        filename:frame_name_list[z_index]})
         
         #t_start=time.time()
-        print('begin')
+        #print('begin')
         #train the image which is the pair of siam_net_z
         sess.run([train_op],feed_dict={
                                               siam.pos_x:pos_x,
                                               siam.pos_y:pos_y,
-                                              siam.x_size:sz_x,
+                                              siam.z_size:sz_z,
+                                              siam.x_size:float(sz_x),
                                               siam_net_z:siam_net_z_[0],
                                               filename:frame_name_list[z_index+1] })
-        print('loss end')
+        #print('loss end')
         #train --back propagation
         #tf.train.AdamOptimizer(hp.learning_rate).minimize(loss_)
         
+        coord.request_stop()
+        coord.join(threads)
         
         
     

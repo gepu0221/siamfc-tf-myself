@@ -4,6 +4,10 @@ import numpy as np
 #填充图像（防止追踪时裁剪的矩形框超出原来的图像）
 def pad_frame(im,frame_size,pos_x,pos_y,patch_size,avg_chan):
     c=patch_size/2
+    c=tf.cast(c,tf.float64)
+    pos_x=tf.cast(pos_x,tf.float64)
+    pos_y=tf.cast(pos_y,tf.float64)
+   
     
     xleft_pad=tf.maximum(0,-tf.cast(tf.round(pos_x-c),tf.int32))
     ytop_pad=tf.maximum(0,-tf.cast(tf.round(pos_y-c),tf.int32))
@@ -29,6 +33,10 @@ def pad_frame(im,frame_size,pos_x,pos_y,patch_size,avg_chan):
 def extract_crops(im,npad,pos_x,pos_y,size_src,size_dst):
     #提取patch的中心
     c=size_src/2
+    c=tf.cast(c,tf.float64)
+    pos_x=tf.cast(pos_x,tf.float64)
+    pos_y=tf.cast(pos_y,tf.float64)
+    
     #经过pad后的crop的左上角坐标
     rect_lx=npad+tf.cast(tf.round(pos_x-c),tf.int32)
     rect_ly=npad+tf.cast(tf.round(pos_y-c),tf.int32)
