@@ -88,7 +88,8 @@ def make_siameseFC(env,design,hp):
     #if need tf.sqrt???????????????
     print('begin calculate the loss')
     loss=tf.sqrt(tf.reduce_mean(tf.square(scores_up_re-tf.cast(scores_gt_re,tf.float32))))
-    #loss=_siam_net_z-1
+    tf.summary.scalar('loss',loss)
+   
     #train --back propagation
     #the train_op trains the variables that define with "tf.Variable" or "tf.get_variable"
     train_op=tf.train.AdamOptimizer(hp.learning_rate).minimize(loss)
@@ -152,8 +153,13 @@ def create_net_define_var(crop_x,crop_z):
     #with tf.variable_scope(scope or 'conv'):
         #trainable:标记是否加入GraphKeys.TRAINABLE_VARIABLES集合
         #tf.truncated_normal_initializer(stddev=0.1):生成的随机的标准方差*********以高斯分布的方式初始化W和b，之后复用（reuse=True)
-        W=tf.get_variable("W",[_conv_w_sz[0],_conv_w_sz[0],_conv_w_in_c[0],_conv_w_out[0]],initializer=tf.truncated_normal_initializer(stddev=0.1))
+        W=tf.get_variable("W",[_conv_w_sz[0],_conv_w_sz[0],_conv_w_in_c[0],_conv_w_out[0]],
+                          initializer=tf.truncated_normal_initializer(stddev=0.1))
         b=tf.get_variable("b",_conv_w_out[0],initializer=tf.truncated_normal_initializer(stddev=0.1))
+        
+        #TB
+        tf.summary.histogram('conv1/W',W)
+        tf.summary.histogram('conv1/b',b)
         
         #padding='VALID'：按照(图片大小-filterSize(=W.size))/stride+1
         #padding='SAME' :大小和原图像一致
@@ -189,6 +195,10 @@ def create_net_define_var(crop_x,crop_z):
         W=tf.get_variable("W",[_conv_w_sz[1],_conv_w_sz[1],_conv_w_in_c[1],_conv_w_out[1]],initializer=tf.truncated_normal_initializer(stddev=0.1))
         b=tf.get_variable("b",_conv_w_out[1],initializer=tf.truncated_normal_initializer(stddev=0.1))
         
+        #TB
+        tf.summary.histogram('conv2/W',W)
+        tf.summary.histogram('conv2/b',b)
+        
         #padding='VALID'：按照(图片大小-filterSize(=W.size))/stride+1
         #padding='SAME' :大小和原图像一致
         #stride:卷积的步长
@@ -221,6 +231,10 @@ def create_net_define_var(crop_x,crop_z):
         #tf.truncated_normal_initializer(stddev=0.1):生成的随机的标准方差*********以高斯分布的方式初始化W和b，之后复用（reuse=True)
         W=tf.get_variable("W",[_conv_w_sz[2],_conv_w_sz[2],_conv_w_in_c[2],_conv_w_out[2]],initializer=tf.truncated_normal_initializer(stddev=0.1))
         b=tf.get_variable("b",_conv_w_out[2],initializer=tf.truncated_normal_initializer(stddev=0.1))
+        
+        #TB
+        tf.summary.histogram('conv3/W',W)
+        tf.summary.histogram('conv3/b',b)
         
         #padding='VALID'：按照(图片大小-filterSize(=W.size))/stride+1
         #padding='SAME' :大小和原图像一致
@@ -256,6 +270,10 @@ def create_net_define_var(crop_x,crop_z):
         W=tf.get_variable("W",[_conv_w_sz[3],_conv_w_sz[3],_conv_w_in_c[3],_conv_w_out[3]],initializer=tf.truncated_normal_initializer(stddev=0.1))
         b=tf.get_variable("b",_conv_w_out[3],initializer=tf.truncated_normal_initializer(stddev=0.1))
         
+        #TB
+        tf.summary.histogram('conv4/W',W)
+        tf.summary.histogram('conv4/b',b)
+        
         #padding='VALID'：按照(图片大小-filterSize(=W.size))/stride+1
         #padding='SAME' :大小和原图像一致
         #stride:卷积的步长
@@ -290,6 +308,10 @@ def create_net_define_var(crop_x,crop_z):
         W=tf.get_variable("W",[_conv_w_sz[4],_conv_w_sz[4],_conv_w_in_c[4],_conv_w_out[4]],initializer=tf.truncated_normal_initializer(stddev=0.1))
         b=tf.get_variable("b",_conv_w_out[4],initializer=tf.truncated_normal_initializer(stddev=0.1))
         
+        #TB
+        tf.summary.histogram('conv5/W',W)
+        tf.summary.histogram('conv5/b',b)
+        
         #padding='VALID'：按照(图片大小-filterSize(=W.size))/stride+1
         #padding='SAME' :大小和原图像一致
         #stride:卷积的步长
@@ -307,6 +329,8 @@ def create_net_define_var(crop_x,crop_z):
                                  padding='VALID',name='pool5')
             h_z=tf.nn.max_pool(h_z,[1,_pool_sz[4],_pool_sz[4],1],strides=[1,_pool_stride[3],_pool_stride[3],1],
                                  padding='VALID',name='pool5')
+            
+    
     return h_z,h_x
 
 def create_net_loss(crop_x,crop_z):

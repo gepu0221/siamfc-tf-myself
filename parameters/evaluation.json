@@ -4,6 +4,6 @@
 	"stop_on_failure": 0,
 	"dataset": "validation",
     "resultset":"result",
-	"video": "Image",
+	"video": "tc_Airport_ce",
 	"start_frame": 0
 }

@@ -37,8 +37,8 @@ def build_tracking_graph(final_score_sz, design, env):
     image_file = tf.read_file(filename)
     # Decode the image as a JPEG file, this will turn it into a Tensor
     #Update
-    #image = tf.image.decode_jpeg(image_file)
-    image = tf.image.decode_bmp(image_file)
+    image = tf.image.decode_jpeg(image_file)
+    #image = tf.image.decode_bmp(image_file)
     image = 255.0 * tf.image.convert_image_dtype(image, tf.float32)
     frame_sz = tf.shape(image)
     

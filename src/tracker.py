@@ -13,6 +13,9 @@ import time
 import src.siamese as siam
 from src.visualization import show_frame, save_frame, show_crops, show_scores
 
+_conv_w_sz=np.array([11,5,3,3,3]) #the map size of filter(weight of conv net)
+_conv_w_in_c=np.array([3,96,256,384,384])# the input channle number of filter
+_conv_w_out=np.array([96,256,384,384,256])# the output number of feature map(the number of filter kernel)
 
 # gpu_device = 2
 # os.environ['CUDA_VISIBLE_DEVICES'] = '{}'.format(gpu_device)
@@ -137,6 +140,18 @@ def tracker(hp, run, design, env, evaluation, frame_name_list, pos_x, pos_y, tar
 
         t_elapsed = time.time() - t_start
         speed = num_frames/t_elapsed
+        
+        for i in range(5):
+            scope_name='conv'+str(i+1)
+            print(scope_name)
+            with tf.variable_scope(scope_name,reuse=True):
+                #W_=tf.get_variable("W",shape=[_conv_w_sz[i],_conv_w_sz[i],_conv_w_in_c[i],_conv_w_out[i]])
+                #b_=tf.get_variable("b",shape=[_conv_w_out[i]])
+                W_=tf.get_variable("W",[_conv_w_sz[i],_conv_w_sz[i],_conv_w_in_c[i],_conv_w_out[i]])
+                b_=tf.get_variable("b",[1,_conv_w_out[i]])
+                with tf.Session() as sess:
+                    sess.run(tf.Print(W_,[W_]))
+                    sess.run(tf.Print(b_,[b_]))
 
         # Finish off the filename queue coordinator.
         coord.request_stop()
