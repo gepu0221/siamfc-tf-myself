@@ -6,7 +6,7 @@ import src.make_siameseFC as siam
 from src.region_to_bbox import region_to_bbox
 from PIL import Image
 
-def train_siam_net(design,hp,frame_name_list,num_frames,gt,filename,siam_net_z,loss,train_op):
+def train_siam_net(design,hp,frame_name_list,num_frames,gt,filename,conv_W,conv_b,siam_net_z,loss,train_op):
     #-------------------------------------------------------------------------
     #index_z:the index of template in the frame_name_list
     #-------------------------------------------------------------------------
@@ -32,7 +32,6 @@ def train_siam_net(design,hp,frame_name_list,num_frames,gt,filename,siam_net_z,l
             sz_z=np.sqrt(float(w_crop_z)*float(h_crop_z))
             sz_x=float(design.instacneSize)/float(design.exemplarSize)*sz_z
             
-            print('begin')
             siam_net_z_ = sess.run([siam_net_z],feed_dict={
             #sess.run([train_op],feed_dict={
                                                        siam.pos_x:pos_x,
